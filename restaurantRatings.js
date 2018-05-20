@@ -23,7 +23,7 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
   const projection = d3.geoMercator()
   projection
     .scale(60000)
-    // .translate([width / 2, height / 2])
+    .translate([0, height / 3])
     // .center(center);
     .center([-73.94, 40.70]);
 
