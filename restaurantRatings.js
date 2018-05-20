@@ -52,14 +52,6 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
     }
   }
 
-  cuisineTypeCheck = (restaurnt) => {
-    const color = d3.scale.category20c();
-    var o = d3.scale.ordinal()
-      .domain(["foo", "bar", "baz"])
-      .range([...d3.schemePastel1, ...d3.schemePastel2, ...d3.schemeSet1, ...d3.schemeSet2, ...d3.schemeSet3, ...d3.schemeAccent]);
-    const cuisineType = restaurnt["Cuisine"];
-  }
-
   getCuisines = (data) => {
     const cuisineTypes = {};
     data.forEach(restaurant => {
@@ -76,9 +68,16 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
   }).then((data) => {
     console.log(data);
     const cuisines = getCuisines(data);
-    const colorScale = d3.scaleOrdinal().domain(cuisines).range([...d3.schemePastel1, ...d3.schemePastel2, ...d3.schemeSet1, ...d3.schemeSet2, ...d3.schemeSet3, ...d3.schemeAccent])
-    // mixing with mapbox
-    // debugger;
+    const colorScale = d3.scaleOrdinal()
+      .domain(cuisines)
+      .range([
+        ...d3.schemePastel1,
+        ...d3.schemePastel2,
+        ...d3.schemeSet1,
+        ...d3.schemeSet2,
+        ...d3.schemeSet3,
+        ...d3.schemeAccent
+      ])
     var tooltip = d3.select("body")
       .append("div")
       .style("position", "absolute")
@@ -102,7 +101,11 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
         return colorScale(d["Cuisine"])
       })
       .attr("class", "testcircle")
-      .on("mouseover", function (d) { tooltip.text(d['DBA'] + ": " + d['Cuisine']); return tooltip.style("visibility", "visible"); })
+      .on("mouseover", function (d) {
+        tooltip.text(d['DBA'] + ": " + d['Cuisine'] +
+          ": " + d["Grade"]);
+        return tooltip.style("visibility", "visible");
+      })
       .on("mousemove", function () {
         return tooltip.style("top",
           (d3.event.pageY - 10) + "px").style("left", (d3.event.pageX + 10) + "px");
