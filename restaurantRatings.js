@@ -1,27 +1,8 @@
-// mapbox
-// mapboxgl.accessToken = 'pk.eyJ1IjoiaG9tdmljdG9yIiwiYSI6ImNqOTFoeng0MjBlaW0ycXFiYTFydXppY3UifQ.4W_HRwq3Szjm3Cav_yIXpw';
-// var map = new mapboxgl.Map({
-//   container: 'map',
-//   style: 'mapbox://styles/mapbox/streets-v10',
-//   center: [-73.94, 40.70], // starting position [lng, lat]
-//   zoom: 9 // starting zoom
-// });
 
-
-// d3
 var rectWidth = 50;
 var height = 300;
 var data = [100, 250, 175, 200, 120, 50, 60];
 var svg = d3.select('svg');
-// var test = svg.selectAll('rect')
-//     .data(data)
-//     .enter().append('rect')
-//     .attr('x', (d, i) => i * rectWidth)
-//     .attr('y', (d) => 300 - d)
-//     .attr('width', rectWidth)
-//     .attr('height', d => d)
-//     .attr('fill', 'blue')
-//     .attr('stroke', '#fff')
 
 // copy-paste of how to make new york
 // geojson http://data.beta.nyc//dataset/3bf5fb73-edb5-4b05-bb29-7c95f4a727fc/resource/6df127b1-6d04-4bb7-b983-07402a2c3f90/download/f4129d9aa6dd4281bc98d0f701629b76nyczipcodetabulationareas.geojson
@@ -42,7 +23,7 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
   const projection = d3.geoMercator()
   projection
     .scale(60000)
-    .translate([width / 2, height / 2])
+    // .translate([width / 2, height / 2])
     // .center(center);
     .center([-73.94, 40.70]);
 
@@ -59,23 +40,12 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
     .style("fill", "steelblue")
     .attr("d", path);
 
-  // svg.selectAll("circle")
-  //   .data([[-73.948142, 40.7750119,], [-73.8491607, 40.7102956,], [-73.94, 40.70]]).enter()
-  //   .append("circle")
-  //   .attr("cx", function (d) {
-  //     return projection(d)[0];
-  //   })
-  //   .attr("cy", function (d) { return projection(d)[1]; })
-  //   .attr("r", "8px")
-  //   .attr("fill", "red")
-  //   .attr("class", "testcircle");
-
-  gradeChecker = (restaurnt) => {
-    if (restaurnt["Grade"] === "A") {
+  gradeChecker = (restaurant) => {
+    if (restaurant["Grade"] === "A") {
       return "green"
-    } else if (restaurnt["Grade"] === "B") {
+    } else if (restaurant["Grade"] === "B") {
       return "blue"
-    } else if (restaurnt["Grade"] === "C") {
+    } else if (restaurant["Grade"] === "C") {
       return "yellow"
     } else {
       return "red";
