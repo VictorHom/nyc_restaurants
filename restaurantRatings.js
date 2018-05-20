@@ -1,4 +1,3 @@
-var port = process.env.PORT || 8000
 // mapbox
 // mapboxgl.accessToken = 'pk.eyJ1IjoiaG9tdmljdG9yIiwiYSI6ImNqOTFoeng0MjBlaW0ycXFiYTFydXppY3UifQ.4W_HRwq3Szjm3Cav_yIXpw';
 // var map = new mapboxgl.Map({
