@@ -1,22 +1,11 @@
-
-var rectWidth = 50;
-var height = 300;
-var data = [100, 250, 175, 200, 120, 50, 60];
 var svg = d3.select('svg');
-
-// copy-paste of how to make new york
-// geojson http://data.beta.nyc//dataset/3bf5fb73-edb5-4b05-bb29-7c95f4a727fc/resource/6df127b1-6d04-4bb7-b983-07402a2c3f90/download/f4129d9aa6dd4281bc98d0f701629b76nyczipcodetabulationareas.geojson
-var width = 960,
-  height = 1160;
-
-
+var width = 960, height = 1160;
 
 var svg = d3.select("body").append("svg")
   .attr("width", width)
   .attr("height", height);
 
 d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((NYC_MapInfo) => {
-  console.log(NYC_MapInfo)
   // after loading geojson, use d3.geo.centroid to find out
   // where you need to center your map
   var center = d3.geoCentroid(NYC_MapInfo);
@@ -24,7 +13,6 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
   projection
     .scale(60000)
     .translate([width / 3, height / 4])
-    // .center(center);
     .center([-73.94, 40.70]);
 
   // now you can create new path function with
@@ -40,6 +28,7 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
     .style("fill", "steelblue")
     .attr("d", path);
 
+  // get color depending on the grade
   gradeChecker = (restaurant) => {
     if (restaurant["Grade"] === "A") {
       return "green"
@@ -52,6 +41,15 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
     }
   }
 
+  // calculate the distance based on Pixel values
+  // from checking distance between 2 points, a euclid dist of  < 5 is about .2 mile
+  // to get a mile, use euclid dist of 25
+  // this is just comparing 2 close by coordinates
+  euclideanDistance = (ax, ay, bx, by) => {
+    return Math.sqrt(Math.pow(ax - bx, 2) + Math.pow(ay - by, 2));
+  }
+
+  // get list of cuisines types to map to color scales
   getCuisines = (data) => {
     const cuisineTypes = {};
     data.forEach(restaurant => {
@@ -60,13 +58,31 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
     return Object.keys(cuisineTypes);
   }
 
+  toggleAreaCircle = (restaurant) => {
+    d3.selectAll('.area-circle').remove()
+    var r = 1.6 / 40000 * 360
+    var circle = d3.geoCircle().center([restaurant['Lng'], restaurant['Lat']]).radius(r);
+    svg.append("path")
+      .attr("d", path(circle()))
+      .attr("fill", "green")
+      .attr("opacity", "0.5")
+      .attr('stroke', "purple")
+      .attr('z-index', "5")
+      .attr('class', "area-circle")
+  }
+
+  updateDescription = (restaurant) => {
+    var list = document.getElementsByClassName("description")[0].innerHTML =
+      restaurant['DBA'] + ": " + restaurant['Cuisine'] + ": " + restaurant["Grade"];
+  }
+
   d3.csv('./cleanedup_short_list_with_ratings_noblanklat.csv', (d) => {
     return {
       key: d["CAMIS"],
       ...d
     };
   }).then((data) => {
-    console.log(data);
+    // console.log(data);
     const cuisines = getCuisines(data);
     const colorScale = d3.scaleOrdinal()
       .domain(cuisines)
@@ -78,12 +94,12 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
         ...d3.schemeSet3,
         ...d3.schemeAccent
       ])
-    var tooltip = d3.select("body")
-      .append("div")
-      .style("position", "absolute")
-      .style("z-index", "10")
-      .style("visibility", "hidden")
-      .text("a simple tooltip");
+    // var tooltip = d3.select("body")
+    //   .append("div")
+    //   .style("position", "absolute")
+    //   .style("z-index", "10")
+    //   .style("visibility", "hidden")
+    //   .text("a simple tooltip");
     const other = {};
     svg.selectAll("circle")
       .data(data).enter()
@@ -94,7 +110,6 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
       .attr("cy", function (d) { return projection([+d['Lng'], +d['Lat']])[1]; })
       .attr("r", "4px")
       .attr("fill", function (d) {
-        // return gradeChecker(d);
         return colorScale(d["Cuisine"])
       })
       .attr('stroke', function (d) {
@@ -102,44 +117,22 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
       })
       .attr("class", "testcircle")
       .on("mouseover", function (d) {
-        tooltip.text(d['DBA'] + ": " + d['Cuisine'] +
-          ": " + d["Grade"]);
-        return tooltip.style("visibility", "visible");
+        toggleAreaCircle(d);
+        // tooltip.text(d['DBA'] + ": " + d['Cuisine'] +
+        //   ": " + d["Grade"]);
+        updateDescription(d);
+        // return tooltip.style("visibility", "visible");
       })
       .on("mousemove", function () {
-        return tooltip.style("top",
-          (d3.event.pageY - 10) + "px").style("left", (d3.event.pageX + 10) + "px");
+        // return tooltip.style("top",
+        //   (d3.event.pageY - 10) + "px").style("left", (d3.event.pageX + 10) + "px");
       })
-      .on("mouseout", function () { return tooltip.style("visibility", "hidden"); });
-    //   .on("mouseover", function (d) {
-
-    //   console.log(d)
-    //   // d3.select(this).enter().append("text")
-    //   // .append("svg:title")
-    //   // .text(function (d) { return d['DBA'] + ": ", d['Cuisine']; });
-    // })
+      .on("mouseout", function (d) {
+        toggleAreaCircle(d);
+        // return tooltip.style("visibility", "hidden");
+      });
   })
 
+
+
 });
-// get to see if there are other grade values - seems like too many reds
-// also get a dict of the type of eateries we have (possibly whittle down the list)
-
-
-
-
-
-  // const testData = [[40.7750119, -73.948142], [40.7102956, -73.8491607]];
-  // data.forEach((marker) => {
-  //   var el = document.createElement('div');
-  //   el.className = 'marker';
-  //   new mapboxgl.Marker(el)
-  //     .setLngLat([+marker['Lng'], +marker['Lat']])
-  //     .addTo(map)
-  // })
-  // testData.forEach((marker) => {
-  //   var el = document.createElement('div');
-  //   el.className = 'marker';
-  //   new mapboxgl.Marker(el)
-  //   .setLngLat([marker[1], marker[0]])
-  //   .addTo(map)
-  // })
