@@ -7,13 +7,21 @@
   <link rel="stylesheet" type="text/css" media="screen" href="main.css" />
   <script src="https://d3js.org/d3.v5.min.js"></script>
   <link href='https://fonts.googleapis.com/css?family=Open+Sans:300' rel='stylesheet' type='text/css'>
-  <style>
-    body { margin:0;position:fixed;top:0;right:0;bottom:0;left:0; }
-  </style>
 
 </head>
 <body>
-  <div class="description"></div>
+  <div class="description">
+    <div>
+      This is a map of NYC, with circles of different restaurants gathered from <a href="https://data.cityofnewyork.us/Health/DOHMH-New-York-City-Restaurant-Inspection-Results">NYC open data</a>.
+      The data was combined with <a href="https://developers.google.com/maps/documentation/geocoding/intro">Google Geocoding API</a>.
+      You can learn more about cleaning the data <a href="https://medium.com/@heyvictor">here</a>
+      There is also an black overlay of the NYC subway lines, but it's hard to see that (Next: adjusting the lines to be subway line colors)
+    </div>
+    Information
+    <div class="restaurant-name">Name: </div>
+    <div class="restaurant-cuisine">Type: </div>
+    <div class="restaurant-grade">Grade: </div>
+  </div>
   <script src="restaurantRatings.js"></script>
 </body>
 </html>
