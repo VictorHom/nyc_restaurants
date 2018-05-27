@@ -3,11 +3,40 @@
   margin:0;position:fixed;top:0;right:0;bottom:0;left:0;
 }
 
-div#first-section, div#second-section, div#third-section {
+html, body {
+    height: 100%;
+}
+
+body {
+  position:fixed;
+  overflow:hidden;
+}
+
+.container {
+  display: flex; 
+  justify-content: space-between;
+}
+
+#text-content {
+  overflow-y: scroll;
+  max-height: 100%;
+}
+
+div.section {
+  height: 100%;
+}
+
+/* div#first-section, div#second-section, div#third-section {
   display: flex;
   flex-direction: row;
+} */
+
+#map {
+  /* position:fixed;
+  left:100px;
+  top:150px; */
 }
 
 .description, .facts {
-  width: 50%;
+  /* width: 50%; */
 }

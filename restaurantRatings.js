@@ -1,7 +1,7 @@
 var svg = d3.select('svg');
 const width = 960, height = 760;
 
-var svg = d3.select("#first-section").append("svg")
+var svg = d3.select("#map").append("svg")
   .attr("width", width)
   .attr("height", height);
 
@@ -39,6 +39,92 @@ function drawNYCMap(svg, features, path) {
     .attr("d", path);
 }
 
+function setAllDataOnMap(svg, data, projection, colorScale) {
+  // svg.selectAll("circle").remove();
+  svg.selectAll("circle")
+    .data(data).enter()
+    .append("circle")
+    .attr("cx", function (d) {
+      return projection([+d['Lng'], +d['Lat']])[0];
+    })
+    .attr("cy", function (d) { return projection([+d['Lng'], +d['Lat']])[1]; })
+    .attr("r", "4px")
+    .attr("opacity", "0.5")
+    .attr("fill", function (d) {
+      return colorScale(d["Cuisine"])
+    })
+    .attr('stroke', function (d) {
+      return colorScale(d["Cuisine"])
+    })
+    .attr("class", "testcircle")
+    .on("mouseover", function (d) {
+      updateDescription(d);
+    })
+    .on("mousemove", function () {
+    })
+    .on("mouseout", function (d) {
+    });
+}
+
+function setAllPoints(svg, data, projection, colorScale) {
+  var selection = d3.selectAll("circle")
+    .transition()
+    .attr("delay", (d, i) => { return 3000 * i })
+    .attr("duration", (d, i) => { return 3000 * (i + 1) })
+    .attr("cx", function (d) {
+      return projection([+d['Lng'], +d['Lat']])[0];
+    })
+    .attr("cy", function (d) {
+      return projection([+d['Lng'], +d['Lat']])[1];
+    })
+    .attr("delay", (d, i) => { return 3000 * i })
+    .attr("r", (d) => {
+      return "4px";
+    })
+    .attr("opacity", (d) => {
+      return "0.5";
+    })
+    .attr("fill", function (d) {
+      return colorScale(d["Cuisine"])
+    })
+    .attr('stroke', function (d) {
+      return colorScale(d["Cuisine"])
+    })
+}
+
+function setCaribbeanRestaurantsOnMap(svg, data, projection, colorScale) {
+  const nonCarribeanRestaurants = data.filter(restaurant => restaurant["Cuisine"].indexOf("Caribbean") === -1)
+  var selection = d3.selectAll("circle")
+    .transition()
+    .attr("delay", (d, i) => { return 3000 * i })
+    .attr("duration", (d, i) => { return 3000 * (i + 1) })
+    .attr("cx", function (d) {
+      if (d["Cuisine"].indexOf("Caribbean") > -1) {
+        return projection([+d['Lng'], +d['Lat']])[0];
+      } else {
+        return -1;
+      }
+    })
+    .attr("cy", function (d) {
+      return projection([+d['Lng'], +d['Lat']])[1];
+    })
+    .attr("delay", (d, i) => { return 3000 * i })
+    .attr("r", (d) => {
+      if (d["Cuisine"].indexOf("Caribbean") > -1) {
+        return "8.0";
+      } else {
+        return "0.0";
+      }
+    })
+    .attr("fill", function (d) {
+      return colorScale(d["Cuisine"])
+    })
+    .attr('stroke', function (d) {
+      return colorScale(d["Cuisine"])
+    })
+
+}
+
 d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((NYC_MapInfo) => {
   // after loading geojson, use d3.geo.centroid to find out
   // where you need to center your map
@@ -56,12 +142,6 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
 
   // and finally draw the actual polygons
   drawNYCMap(svg, NYC_MapInfo.features, path);
-  // svg.selectAll("path")
-  //   .data(NYC_MapInfo.features)
-  //   .enter()
-  //   .append("path")
-  //   .style("fill", "steelblue")
-  //   .attr("d", path);
 
   // get color depending on the grade
   gradeChecker = (restaurant) => {
@@ -118,70 +198,25 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
         ...d3.schemeAccent
       ]);
 
-    svg.selectAll("circle")
-      .data(data).enter()
-      .append("circle")
-      .attr("cx", function (d) {
-        return projection([+d['Lng'], +d['Lat']])[0];
-      })
-      .attr("cy", function (d) { return projection([+d['Lng'], +d['Lat']])[1]; })
-      .attr("r", "4px")
-      .attr("opacity", "0.5")
-      .attr("fill", function (d) {
-        return colorScale(d["Cuisine"])
-      })
-      .attr('stroke', function (d) {
-        return colorScale(d["Cuisine"])
-      })
-      .attr("class", "testcircle")
-      .on("mouseover", function (d) {
-        updateDescription(d);
-      })
-      .on("mousemove", function () {
-      })
-      .on("mouseout", function (d) {
-      });
+    setAllDataOnMap(svg, data, projection, colorScale);
 
-    // second section
-    var secondSvg = d3.select("#second-section").append("svg")
-      .attr("width", width)
-      .attr("height", height);
-    drawNYCMap(secondSvg, NYC_MapInfo.features, path);
+    var secondSectionDistance = $('#second-section').offset().top;
 
-    var waypoint = new Waypoint({
-      element: document.getElementById('second-section'),
-      handler: function (direction) {
-        console.log(direction)
-        // next step put the map on the same side
-        // transition the data down ward to show different facts
-        if (direction === 'down') {
-          // d3.select("#second-section svg").remove();
-          var t = d3.transition().duration(1000);
-          const kosherRestaurants = data.filter(restaurant => restaurant["Cuisine"] === "Jewish/Kosher")
-          secondSvg.selectAll("circle")
-            .data(kosherRestaurants).enter()
-            .append("circle")
-            .attr("cx", function (d) {
-              return projection([+d['Lng'], +d['Lat']])[0];
-            })
-            .attr("cy", function (d) { return projection([+d['Lng'], +d['Lat']])[1]; })
-            .attr("r", "4px")
-            .attr("opacity", "0.5")
-            .attr("fill", function (d) {
-              return colorScale(d["Cuisine"])
-            })
-            .attr('stroke', function (d) {
-              return colorScale(d["Cuisine"])
-            })
-            .attr("class", "testcircle")
-            .on("mouseover", function (d) {
-              updateDescription(d);
-            })
-            .on("mousemove", function () {
-            })
-            .on("mouseout", function (d) {
-            });
-        }
+
+    // when at second section
+    $("#text-content").scroll(function () {
+      if (($("#text-content")).scrollTop() >= secondSectionDistance) {
+        setCaribbeanRestaurantsOnMap(svg, data, projection, colorScale);
+      }
+    });
+
+    // when at first section
+    $("#text-content").scroll(function () {
+      var firstSectionDistance = $('#first-section').offset().top;
+      console.log("text content scroll top", $("#text-content").scrollTop());
+      console.log(firstSectionDistance, "first section")
+      if (($("#text-content")).scrollTop() < firstSectionDistance) {
+        setAllPoints(svg, data, projection, colorScale);
       }
     });
   })
