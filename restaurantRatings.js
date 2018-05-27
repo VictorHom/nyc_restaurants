@@ -1,9 +1,10 @@
 var svg = d3.select('svg');
-var width = 960, height = 1160;
+const width = 960, height = 760;
 
-var svg = d3.select("body").append("svg")
+var svg = d3.select("#first-section").append("svg")
   .attr("width", width)
   .attr("height", height);
+
 
 function loadSubwaylines() {
   d3.json("subwaylines.geojson", (d) => { return d; }).then(subwaylineMap => {
@@ -11,7 +12,7 @@ function loadSubwaylines() {
     const projection = d3.geoMercator()
     projection
       .scale(70000)
-      .translate([width / 2.5, height / 3.4])
+      .translate([width / 2.5, height / 2])
       .center([-73.94, 40.70]);
 
     // now you can create new path function with
@@ -29,6 +30,15 @@ function loadSubwaylines() {
   })
 }
 
+function drawNYCMap(svg, features, path) {
+  svg.selectAll("path")
+    .data(features)
+    .enter()
+    .append("path")
+    .style("fill", "steelblue")
+    .attr("d", path);
+}
+
 d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((NYC_MapInfo) => {
   // after loading geojson, use d3.geo.centroid to find out
   // where you need to center your map
@@ -36,7 +46,7 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
   const projection = d3.geoMercator()
   projection
     .scale(70000)
-    .translate([width / 2.5, height / 3.4])
+    .translate([width / 2.5, height / 2])
     .center([-73.94, 40.70]);
 
   // now you can create new path function with
@@ -45,12 +55,14 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
     .projection(projection);
 
   // and finally draw the actual polygons
-  svg.selectAll("path")
-    .data(NYC_MapInfo.features)
-    .enter()
-    .append("path")
-    .style("fill", "steelblue")
-    .attr("d", path);
+  drawNYCMap(svg, NYC_MapInfo.features, path);
+  // svg.selectAll("path")
+  //   .data(NYC_MapInfo.features)
+  //   .enter()
+  //   .append("path")
+  //   .style("fill", "steelblue")
+  //   .attr("d", path);
+
   // get color depending on the grade
   gradeChecker = (restaurant) => {
     if (restaurant["Grade"] === "A") {
@@ -79,19 +91,6 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
       cuisineTypes[restaurant["Cuisine"]] = 1;
     });
     return Object.keys(cuisineTypes);
-  }
-
-  toggleAreaCircle = (restaurant) => {
-    d3.selectAll('.area-circle').remove()
-    // var r = 1.6 / 40000 * 360
-    // var circle = d3.geoCircle().center([restaurant['Lng'], restaurant['Lat']]).radius(r);
-    // svg.append("path")
-    //   .attr("d", path(circle()))
-    //   .attr("fill", "green")
-    //   .attr("opacity", "0.5")
-    //   .attr('stroke', "purple")
-    //   .attr('z-index', "5")
-    //   .attr('class', "area-circle")
   }
 
   updateDescription = (restaurant) => {
@@ -136,16 +135,58 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
       })
       .attr("class", "testcircle")
       .on("mouseover", function (d) {
-        toggleAreaCircle(d);
         updateDescription(d);
       })
       .on("mousemove", function () {
       })
       .on("mouseout", function (d) {
-        toggleAreaCircle(d);
       });
+
+    // second section
+    var secondSvg = d3.select("#second-section").append("svg")
+      .attr("width", width)
+      .attr("height", height);
+    drawNYCMap(secondSvg, NYC_MapInfo.features, path);
+
+    var waypoint = new Waypoint({
+      element: document.getElementById('second-section'),
+      handler: function (direction) {
+        console.log(direction)
+        // next step put the map on the same side
+        // transition the data down ward to show different facts
+        if (direction === 'down') {
+          // d3.select("#second-section svg").remove();
+          var t = d3.transition().duration(1000);
+          const kosherRestaurants = data.filter(restaurant => restaurant["Cuisine"] === "Jewish/Kosher")
+          secondSvg.selectAll("circle")
+            .data(kosherRestaurants).enter()
+            .append("circle")
+            .attr("cx", function (d) {
+              return projection([+d['Lng'], +d['Lat']])[0];
+            })
+            .attr("cy", function (d) { return projection([+d['Lng'], +d['Lat']])[1]; })
+            .attr("r", "4px")
+            .attr("opacity", "0.5")
+            .attr("fill", function (d) {
+              return colorScale(d["Cuisine"])
+            })
+            .attr('stroke', function (d) {
+              return colorScale(d["Cuisine"])
+            })
+            .attr("class", "testcircle")
+            .on("mouseover", function (d) {
+              updateDescription(d);
+            })
+            .on("mousemove", function () {
+            })
+            .on("mouseout", function (d) {
+            });
+        }
+      }
+    });
   })
 
   loadSubwaylines();
+
 
 });
