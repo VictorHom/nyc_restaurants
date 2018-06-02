@@ -20,6 +20,8 @@ body {
 #text-content {
   overflow-y: scroll;
   max-height: 100%;
+  border-left: 2px solid black;
+  padding-left: 10px;
 }
 
 div.section {

@@ -27,6 +27,16 @@ function loadSubwaylines() {
       .append("path")
       .style("fill", "black")
       .attr("d", path);
+
+    // add zoom feature
+    var zoom = d3.zoom()
+      .scaleExtent([1, 40])
+      .translateExtent([[-100, -100], [width + 90, height + 100]])
+      .on("zoom", zoomed);
+    svg.call(zoom);
+    function zoomed() {
+      svg.attr("transform", d3.event.transform);
+    }
   })
 }
 
@@ -36,7 +46,7 @@ function drawNYCMap(svg, features, path) {
     .enter()
     .append("path")
     .style("fill", "steelblue")
-    .attr("d", path);
+    .attr("d", path)
 }
 
 function setAllDataOnMap(svg, data, projection, colorScale) {
@@ -56,14 +66,15 @@ function setAllDataOnMap(svg, data, projection, colorScale) {
     .attr('stroke', function (d) {
       return colorScale(d["Cuisine"])
     })
-    .attr("class", "testcircle")
     .on("mouseover", function (d) {
       updateDescription(d);
+      updateDescriptionCarribean(d);
+      updateDescriptionKosher(d);
     })
     .on("mousemove", function () {
     })
     .on("mouseout", function (d) {
-    });
+    })
 }
 
 function setAllPoints(svg, data, projection, colorScale) {
@@ -125,6 +136,38 @@ function setCaribbeanRestaurantsOnMap(svg, data, projection, colorScale) {
 
 }
 
+function setKosherRestaurantsOnMap(svg, data, projection, colorScale) {
+  const nonKosherRestaurants = data.filter(restaurant => restaurant["Cuisine"].indexOf("Kosher") === -1)
+  var selection = d3.selectAll("circle")
+    .transition()
+    .attr("delay", (d, i) => { return 3000 * i })
+    .attr("duration", (d, i) => { return 3000 * (i + 1) })
+    .attr("cx", function (d) {
+      if (d["Cuisine"].indexOf("Kosher") > -1) {
+        return projection([+d['Lng'], +d['Lat']])[0];
+      } else {
+        return -1;
+      }
+    })
+    .attr("cy", function (d) {
+      return projection([+d['Lng'], +d['Lat']])[1];
+    })
+    .attr("delay", (d, i) => { return 3000 * i })
+    .attr("r", (d) => {
+      if (d["Cuisine"].indexOf("Kosher") > -1) {
+        return "8.0";
+      } else {
+        return "0.0";
+      }
+    })
+    .attr("fill", function (d) {
+      return colorScale(d["Cuisine"])
+    })
+    .attr('stroke', function (d) {
+      return colorScale(d["Cuisine"])
+    })
+}
+
 d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((NYC_MapInfo) => {
   // after loading geojson, use d3.geo.centroid to find out
   // where you need to center your map
@@ -179,13 +222,24 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
     document.getElementsByClassName("restaurant-grade")[0].innerHTML = "Grade: " + restaurant['Grade'];
   }
 
+  updateDescriptionCarribean = (restaurant) => {
+    document.getElementsByClassName("cr-restaurant-name")[0].innerHTML = "Name: " + restaurant['DBA'];
+    document.getElementsByClassName("cr-restaurant-cuisine")[0].innerHTML = "Type: " + restaurant['Cuisine'];
+    document.getElementsByClassName("cr-restaurant-grade")[0].innerHTML = "Grade: " + restaurant['Grade'];
+  }
+
+  updateDescriptionKosher = (restaurant) => {
+    document.getElementsByClassName("ko-restaurant-name")[0].innerHTML = "Name: " + restaurant['DBA'];
+    document.getElementsByClassName("ko-restaurant-cuisine")[0].innerHTML = "Type: " + restaurant['Cuisine'];
+    document.getElementsByClassName("ko-restaurant-grade")[0].innerHTML = "Grade: " + restaurant['Grade'];
+  }
+
   d3.csv('./cleanedup_short_list_with_ratings_noblanklat.csv', (d) => {
     return {
       key: d["CAMIS"],
       ...d
     };
   }).then((data) => {
-    // console.log(data);
     const cuisines = getCuisines(data);
     const colorScale = d3.scaleOrdinal()
       .domain(cuisines)
@@ -201,21 +255,24 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
     setAllDataOnMap(svg, data, projection, colorScale);
 
     var secondSectionDistance = $('#second-section').offset().top;
+    var thirdSectionDistance = $('#third-section').offset().top;
 
-
-    // when at second section
+    // when at second section and third section
     $("#text-content").scroll(function () {
-      if (($("#text-content")).scrollTop() >= secondSectionDistance) {
+      if (($("#text-content")).scrollTop() + 100 >= secondSectionDistance) {
         setCaribbeanRestaurantsOnMap(svg, data, projection, colorScale);
+      }
+      if (($("#text-content")).scrollTop() + 100 >= thirdSectionDistance) {
+        setKosherRestaurantsOnMap(svg, data, projection, colorScale);
       }
     });
 
     // when at first section
     $("#text-content").scroll(function () {
       var firstSectionDistance = $('#first-section').offset().top;
-      console.log("text content scroll top", $("#text-content").scrollTop());
-      console.log(firstSectionDistance, "first section")
-      if (($("#text-content")).scrollTop() < firstSectionDistance) {
+      // console.log("text content scroll top", $("#text-content").scrollTop());
+      // console.log(firstSectionDistance, "first section")
+      if (($("#text-content")).scrollTop() + 100 < firstSectionDistance) {
         setAllPoints(svg, data, projection, colorScale);
       }
     });
