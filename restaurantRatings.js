@@ -25,7 +25,8 @@ function loadSubwaylines() {
       .data(subwaylineMap.features)
       .enter()
       .append("path")
-      .style("fill", "black")
+      .style("fill", "transparent")
+      .style("stroke", "black")
       .attr("d", path);
 
     // add zoom feature
@@ -68,8 +69,8 @@ function setAllDataOnMap(svg, data, projection, colorScale) {
     })
     .on("mouseover", function (d) {
       updateDescription(d);
-      updateDescriptionCarribean(d);
-      updateDescriptionKosher(d);
+      // updateDescriptionCarribean(d);
+      // updateDescriptionKosher(d);
     })
     .on("mousemove", function () {
     })
@@ -94,71 +95,6 @@ function setAllPoints(svg, data, projection, colorScale) {
     })
     .attr("opacity", (d) => {
       return "0.5";
-    })
-    .attr("fill", function (d) {
-      return colorScale(d["Cuisine"])
-    })
-    .attr('stroke', function (d) {
-      return colorScale(d["Cuisine"])
-    })
-}
-
-function setCaribbeanRestaurantsOnMap(svg, data, projection, colorScale) {
-  const nonCarribeanRestaurants = data.filter(restaurant => restaurant["Cuisine"].indexOf("Caribbean") === -1)
-  var selection = d3.selectAll("circle")
-    .transition()
-    .attr("delay", (d, i) => { return 3000 * i })
-    .attr("duration", (d, i) => { return 3000 * (i + 1) })
-    .attr("cx", function (d) {
-      if (d["Cuisine"].indexOf("Caribbean") > -1) {
-        return projection([+d['Lng'], +d['Lat']])[0];
-      } else {
-        return -1;
-      }
-    })
-    .attr("cy", function (d) {
-      return projection([+d['Lng'], +d['Lat']])[1];
-    })
-    .attr("delay", (d, i) => { return 3000 * i })
-    .attr("r", (d) => {
-      if (d["Cuisine"].indexOf("Caribbean") > -1) {
-        return "8.0";
-      } else {
-        return "0.0";
-      }
-    })
-    .attr("fill", function (d) {
-      return colorScale(d["Cuisine"])
-    })
-    .attr('stroke', function (d) {
-      return colorScale(d["Cuisine"])
-    })
-
-}
-
-function setKosherRestaurantsOnMap(svg, data, projection, colorScale) {
-  const nonKosherRestaurants = data.filter(restaurant => restaurant["Cuisine"].indexOf("Kosher") === -1)
-  var selection = d3.selectAll("circle")
-    .transition()
-    .attr("delay", (d, i) => { return 3000 * i })
-    .attr("duration", (d, i) => { return 3000 * (i + 1) })
-    .attr("cx", function (d) {
-      if (d["Cuisine"].indexOf("Kosher") > -1) {
-        return projection([+d['Lng'], +d['Lat']])[0];
-      } else {
-        return -1;
-      }
-    })
-    .attr("cy", function (d) {
-      return projection([+d['Lng'], +d['Lat']])[1];
-    })
-    .attr("delay", (d, i) => { return 3000 * i })
-    .attr("r", (d) => {
-      if (d["Cuisine"].indexOf("Kosher") > -1) {
-        return "8.0";
-      } else {
-        return "0.0";
-      }
     })
     .attr("fill", function (d) {
       return colorScale(d["Cuisine"])
@@ -222,17 +158,6 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
     document.getElementsByClassName("restaurant-grade")[0].innerHTML = "Grade: " + restaurant['Grade'];
   }
 
-  updateDescriptionCarribean = (restaurant) => {
-    document.getElementsByClassName("cr-restaurant-name")[0].innerHTML = "Name: " + restaurant['DBA'];
-    document.getElementsByClassName("cr-restaurant-cuisine")[0].innerHTML = "Type: " + restaurant['Cuisine'];
-    document.getElementsByClassName("cr-restaurant-grade")[0].innerHTML = "Grade: " + restaurant['Grade'];
-  }
-
-  updateDescriptionKosher = (restaurant) => {
-    document.getElementsByClassName("ko-restaurant-name")[0].innerHTML = "Name: " + restaurant['DBA'];
-    document.getElementsByClassName("ko-restaurant-cuisine")[0].innerHTML = "Type: " + restaurant['Cuisine'];
-    document.getElementsByClassName("ko-restaurant-grade")[0].innerHTML = "Grade: " + restaurant['Grade'];
-  }
 
   d3.csv('./cleanedup_short_list_with_ratings_noblanklat.csv', (d) => {
     return {
@@ -254,28 +179,78 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
 
     setAllDataOnMap(svg, data, projection, colorScale);
 
-    var secondSectionDistance = $('#second-section').offset().top;
-    var thirdSectionDistance = $('#third-section').offset().top;
 
-    // when at second section and third section
-    $("#text-content").scroll(function () {
-      if (($("#text-content")).scrollTop() + 100 >= secondSectionDistance) {
-        setCaribbeanRestaurantsOnMap(svg, data, projection, colorScale);
-      }
-      if (($("#text-content")).scrollTop() + 100 >= thirdSectionDistance) {
-        setKosherRestaurantsOnMap(svg, data, projection, colorScale);
-      }
-    });
 
-    // when at first section
-    $("#text-content").scroll(function () {
-      var firstSectionDistance = $('#first-section').offset().top;
-      // console.log("text content scroll top", $("#text-content").scrollTop());
-      // console.log(firstSectionDistance, "first section")
-      if (($("#text-content")).scrollTop() + 100 < firstSectionDistance) {
-        setAllPoints(svg, data, projection, colorScale);
+    function getCuisineTypeSelectOptions(data) {
+      const cuisineTypes = Array.from(new Set(data.map(data => data["Cuisine"])));
+      console.log("cuisineTypes", cuisineTypes);
+      return cuisineTypes.reduce((agg, type) => {
+        return agg + '<option value=' + type + '>' + type + '</option>';
+      }, '<option value="NONE">None</option>');
+    }
+    function getGradeSelectOptions(data) {
+      const cuisineGrades = Array.from(new Set(data.map(data => data["Grade"])));
+      return cuisineGrades.reduce((agg, grade) => {
+        return agg + '<option value=' + grade + '>' + grade + '</option>';
+      }, '<option value="NONE">None</option>');
+    }
+
+    function updateDataOnMap(data) {
+      const cuisineType = document.getElementById("cuisine-type").value;
+      const cuisineGrade = document.getElementById("cuisine-grade").value;
+      let filterData = [...data];
+      if (cuisineType && cuisineType !== "NONE") {
+        filterData = filterData.filter(datum => datum["Cuisine"] === cuisineType);
+        console.log(filterData);
       }
-    });
+      if (cuisineGrade && cuisineGrade !== "NONE") {
+        filterData = filterData.filter(datum => datum["Grade"] == cuisineGrade);
+      }
+      console.log(filterData);
+      const camisValues = filterData.map(datum => datum["CAMIS"]);
+      console.log(cuisineType);
+      console.log(cuisineGrade);
+      const allCircles = d3
+        .selectAll("circle")
+        .data(filterData)
+
+      allCircles
+        .filter(function (d) { return camisValues.indexOf(d.CAMIS) > - 1 })
+        .enter().append("circle")
+        .attr("cx", function (d) {
+          return projection([+d['Lng'], +d['Lat']])[0];
+        })
+        .attr("cy", function (d) {
+          return projection([+d['Lng'], +d['Lat']])[1];
+        })
+        .attr("delay", (d, i) => { return 3000 * i })
+        .attr("r", (d) => {
+          return "4px";
+        })
+        .attr("opacity", (d) => {
+          return "0.5";
+        })
+        .attr("fill", function (d) {
+          return colorScale(d["Cuisine"])
+        })
+        .attr('stroke', function (d) {
+          return colorScale(d["Cuisine"])
+        })
+
+      allCircles.exit().remove();
+      // console.log(filterData);
+      // update the map
+    }
+
+    // set the dropdown options dynamically
+    jQuery("#dropdowns").append('<select id="cuisine-type" name="Cuisine">' + getCuisineTypeSelectOptions(data) + '</select>');
+    jQuery("#dropdowns").append('<select id="cuisine-grade" name="Grade">' + getGradeSelectOptions(data) + '</select>');
+    jQuery("#cuisine-type, #cuisine-grade").change((val) => {
+      console.log(document.getElementById("cuisine-type").value);
+      const cuisineType = document.getElementById("cuisine-type").value;
+      updateDataOnMap(data);
+    })
+
   })
 
   loadSubwaylines();

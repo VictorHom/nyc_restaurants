@@ -1,4 +1,5 @@
 <html>
+
 <head>
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -12,28 +13,33 @@
   <link href='https://fonts.googleapis.com/css?family=Open+Sans:300' rel='stylesheet' type='text/css'>
 
 </head>
-<body>
-  
-  <div class="container">
-      <div id="map"></div>
-      <div id="text-content">
 
-          <div class="section" id="first-section">
-              <div class="description">
-                <div>
-                  WORK IN PROGRESS!
-                  This is a map of NYC, with circles of different restaurants gathered from <a href="https://data.cityofnewyork.us/Health/DOHMH-New-York-City-Restaurant-Inspection-Results">NYC open data</a>.
-                  The data was combined with <a href="https://developers.google.com/maps/documentation/geocoding/intro">Google Geocoding API</a>.
-                  You can learn more about cleaning the data <a href="https://medium.com/@heyvictor">here</a>
-                  There is also an black overlay of the NYC subway lines, but it's hard to see that (Next: adjusting the lines to be subway line colors)
-                </div>
-                Information
-                <div class="restaurant-name">Name: </div>
-                <div class="restaurant-cuisine">Type: </div>
-                <div class="restaurant-grade">Grade: </div>
-              </div>
-              </div>
-              <div class="section" id="second-section">
+<body>
+
+  <div class="container">
+    <div id="map"></div>
+    <div id="text-content">
+
+      <div class="section" id="first-section">
+        <div class="description">
+          <div>
+            WORK IN PROGRESS! This is a map of NYC, with circles of different restaurants gathered from
+            <a href="https://data.cityofnewyork.us/Health/DOHMH-New-York-City-Restaurant-Inspection-Results">NYC open data</a>. The data was combined with
+            <a href="https://developers.google.com/maps/documentation/geocoding/intro">Google Geocoding API</a>. You can learn more about cleaning the data
+            <a href="https://medium.com/@heyvictor">here</a>
+            There is also an black overlay of the NYC subway lines, but it's hard to see that (Next: adjusting the lines to be subway
+            line colors)
+          </div>
+          <div id="dropdowns">
+
+          </div>
+          Information
+          <div class="restaurant-name">Name: </div>
+          <div class="restaurant-cuisine">Type: </div>
+          <div class="restaurant-grade">Grade: </div>
+        </div>
+      </div>
+      <!-- <div class="section" id="second-section">
                 Interesting:
                 <div class="facts">
                   <div class="cr-restaurant-name">Name: </div>
@@ -48,11 +54,12 @@
                     <div class="ko-restaurant-cuisine">Type: </div>
                     <div class="ko-restaurant-grade">Grade: </div>
                   </div>
-              </div>
-      </div>
+              </div> -->
+    </div>
   </div>
 
   </div>
   <script src="restaurantRatings.js"></script>
 </body>
+
 </html>
