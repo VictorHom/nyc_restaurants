@@ -50,10 +50,25 @@ function drawNYCMap(svg, features, path) {
     .attr("d", path)
 }
 
-function setAllDataOnMap(svg, data, projection, colorScale) {
-  // svg.selectAll("circle").remove();
-  svg.selectAll("circle")
-    .data(data).enter()
+function updateAllDataOnMap(svg, data, projection, colorScale) {
+
+      const cuisineType = document.getElementById("cuisine-type") ? document.getElementById("cuisine-type").value : "NONE";
+      const cuisineGrade = document.getElementById("cuisine-grade") ? document.getElementById("cuisine-grade").value : "NONE";
+      let filterData = jQuery.extend(true, [], data);
+      if (cuisineType && cuisineType !== "NONE") {
+        filterData = filterData.filter(datum => datum["Cuisine"] === cuisineType);
+      }
+      if (cuisineGrade && cuisineGrade !== "NONE") {
+        filterData = filterData.filter(datum => datum["Grade"] == cuisineGrade);
+
+      }
+      const camisValues = filterData.map(datum => datum["CAMIS"]);
+
+  const selection = svg.selectAll("circle")
+    .data(filterData)
+
+  selection
+    .enter()
     .append("circle")
     .attr("cx", function (d) {
       return projection([+d['Lng'], +d['Lat']])[0];
@@ -69,39 +84,13 @@ function setAllDataOnMap(svg, data, projection, colorScale) {
     })
     .on("mouseover", function (d) {
       updateDescription(d);
-      // updateDescriptionCarribean(d);
-      // updateDescriptionKosher(d);
     })
     .on("mousemove", function () {
     })
     .on("mouseout", function (d) {
     })
-}
 
-function setAllPoints(svg, data, projection, colorScale) {
-  var selection = d3.selectAll("circle")
-    .transition()
-    .attr("delay", (d, i) => { return 3000 * i })
-    .attr("duration", (d, i) => { return 3000 * (i + 1) })
-    .attr("cx", function (d) {
-      return projection([+d['Lng'], +d['Lat']])[0];
-    })
-    .attr("cy", function (d) {
-      return projection([+d['Lng'], +d['Lat']])[1];
-    })
-    .attr("delay", (d, i) => { return 3000 * i })
-    .attr("r", (d) => {
-      return "4px";
-    })
-    .attr("opacity", (d) => {
-      return "0.5";
-    })
-    .attr("fill", function (d) {
-      return colorScale(d["Cuisine"])
-    })
-    .attr('stroke', function (d) {
-      return colorScale(d["Cuisine"])
-    })
+  selection.exit().remove();
 }
 
 d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((NYC_MapInfo) => {
@@ -133,14 +122,6 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
     } else {
       return "red";
     }
-  }
-
-  // calculate the distance based on Pixel values
-  // from checking distance between 2 points, a euclid dist of  < 5 is about .2 mile
-  // to get a mile, use euclid dist of 25
-  // this is just comparing 2 close by coordinates
-  euclideanDistance = (ax, ay, bx, by) => {
-    return Math.sqrt(Math.pow(ax - bx, 2) + Math.pow(ay - by, 2));
   }
 
   // get list of cuisines types to map to color scales
@@ -177,13 +158,10 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
         ...d3.schemeAccent
       ]);
 
-    setAllDataOnMap(svg, data, projection, colorScale);
-
-
+    updateAllDataOnMap(svg, data, projection, colorScale);
 
     function getCuisineTypeSelectOptions(data) {
       const cuisineTypes = Array.from(new Set(data.map(data => data["Cuisine"])));
-      console.log("cuisineTypes", cuisineTypes);
       return cuisineTypes.reduce((agg, type) => {
         return agg + '<option value=' + type + '>' + type + '</option>';
       }, '<option value="NONE">None</option>');
@@ -195,65 +173,14 @@ d3.json("./opendataset_borough_boundaries.geojson", (d) => { return d; }).then((
       }, '<option value="NONE">None</option>');
     }
 
-    function updateDataOnMap(data) {
-      const cuisineType = document.getElementById("cuisine-type").value;
-      const cuisineGrade = document.getElementById("cuisine-grade").value;
-      let filterData = [...data];
-      if (cuisineType && cuisineType !== "NONE") {
-        filterData = filterData.filter(datum => datum["Cuisine"] === cuisineType);
-        console.log(filterData);
-      }
-      if (cuisineGrade && cuisineGrade !== "NONE") {
-        filterData = filterData.filter(datum => datum["Grade"] == cuisineGrade);
-      }
-      console.log(filterData);
-      const camisValues = filterData.map(datum => datum["CAMIS"]);
-      console.log(cuisineType);
-      console.log(cuisineGrade);
-      const allCircles = d3
-        .selectAll("circle")
-        .data(filterData)
-
-      allCircles
-        .filter(function (d) { return camisValues.indexOf(d.CAMIS) > - 1 })
-        .enter().append("circle")
-        .attr("cx", function (d) {
-          return projection([+d['Lng'], +d['Lat']])[0];
-        })
-        .attr("cy", function (d) {
-          return projection([+d['Lng'], +d['Lat']])[1];
-        })
-        .attr("delay", (d, i) => { return 3000 * i })
-        .attr("r", (d) => {
-          return "4px";
-        })
-        .attr("opacity", (d) => {
-          return "0.5";
-        })
-        .attr("fill", function (d) {
-          return colorScale(d["Cuisine"])
-        })
-        .attr('stroke', function (d) {
-          return colorScale(d["Cuisine"])
-        })
-
-      allCircles.exit().remove();
-      // console.log(filterData);
-      // update the map
-    }
-
     // set the dropdown options dynamically
     jQuery("#dropdowns").append('<select id="cuisine-type" name="Cuisine">' + getCuisineTypeSelectOptions(data) + '</select>');
     jQuery("#dropdowns").append('<select id="cuisine-grade" name="Grade">' + getGradeSelectOptions(data) + '</select>');
     jQuery("#cuisine-type, #cuisine-grade").change((val) => {
-      console.log(document.getElementById("cuisine-type").value);
-      const cuisineType = document.getElementById("cuisine-type").value;
-      updateDataOnMap(data);
+      updateAllDataOnMap(svg, data, projection, colorScale);
     })
 
   })
 
   loadSubwaylines();
-
-
 });
